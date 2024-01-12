@@ -11,8 +11,8 @@ fake = Faker()
 def generate_sales_transaction():
     user = fake.simple_profile()
     return {
-        'tnx_id': fake.uuid4(),
-        'prd_name': random.choice([
+        'transactionId': fake.uuid4(),
+        'productName': random.choice([
             'laptop',
             'smartphone',
             'tablet',
@@ -20,7 +20,7 @@ def generate_sales_transaction():
             'headphone',
             'speaker'
         ]),
-        'prd_id': random.choice([
+        'productId': random.choice([
             'product-1',
             'product-2',
             'product-3',
@@ -28,7 +28,7 @@ def generate_sales_transaction():
             'product-5',
             'product-6'
         ]),
-        'prd_category': random.choice([
+        'productCategory': random.choice([
             'electronics',
             'fashion',
             'home',
@@ -36,9 +36,9 @@ def generate_sales_transaction():
             'beauty',
             'health'
         ]),
-        'prd_price': round(random.uniform(100, 1000), 2),
-        'prd_quantity': random.randint(1, 10),
-        'prd_brand': random.choice([
+        'productPrice': round(random.uniform(100, 1000), 2),
+        'productQuantity': random.randint(1, 10),
+        'productBrand': random.choice([
             'apple',
             'samsung',
             'xiaomi',
@@ -49,9 +49,9 @@ def generate_sales_transaction():
             'USD',
             'EUR',
         ]),
-        'customer_id': user['username'],
-        'tnx_date': fake.date_time_between(start_date='-1y', end_date='now').isoformat(),
-        'payment_method': random.choice([
+        'customerId': user['username'],
+        'transactionDate': fake.date_time_between(start_date='-1y', end_date='now').isoformat(),
+        'paymentMethod': random.choice([
             'credit_card',
             'debit_card',
             'paypal',
@@ -67,23 +67,23 @@ def delivery_report(err, msg):
 def main():
     topic = 'sales_transactions'
     producer = SerializingProducer({
-        'bootstrap.servers': 'localhost:9092',
+        'bootstrap.servers': 'broker:9092',
     })
     curr_time = datetime.now()
     while (datetime.now() - curr_time).seconds < 120:
         try:
             tnx = generate_sales_transaction()
-            tnx['total_amount'] = tnx['prd_price'] * tnx['prd_quantity']
+            tnx['totalAmount'] = tnx['productPrice'] * tnx['productQuantity']
 
             producer.produce(
                 topic=topic,
-                key=tnx['tnx_id'],
+                key=tnx['transactionId'],
                 value=json.dumps(tnx),
                 on_delivery=delivery_report
             )
 
             producer.poll(0)
-            time.sleep(5)
+            time.sleep(2)
         except BufferError as e:
             print('Buffer full, waiting for free space on the queue...')
             time.sleep(1)
